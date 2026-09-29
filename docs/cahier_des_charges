@@ -1,0 +1,108 @@
+CAHIER DES CHARGES FONCTIONNEL ET TECHNIQUE (CDCFT)Projet : Refonte de la Plateforme Web Institutionnelle & Commerciale — BELTRANSClient : Société Beli Transit Frets Services (BELTRANS)Auteur / Rôle : Technical Product Engineer & Architecte SolutionsVersion : 1.1 (Revue d'Architecture & Validation Technique)1. STACK TECHNIQUE RECOMMANDÉE & ARCHITECTURE (Option B+)Pour garantir des performances optimales, un SEO irréprochable et une évolutivité sans friction vers la V2 (espace client/tracking), nous retenons l'Option B+ (SSG/ISR + Serverless API / Micro-Backend).                  ┌─────────────────────────────────────────────────────────┐
+                  │                      CLIENT (Browser)                   │
+                  └────────────────────────────┬────────────────────────────┘
+                                               │
+                                      HTTPS / JSON API
+                                               │
+                  ┌────────────────────────────▼────────────────────────────┐
+                  │                 FRONTEND (Next.js 14+ / React)          │
+                  │   - App Router & Server Components                      │
+                  │   - Tailwind CSS & Shadcn/UI (Design System)            │
+                  │   - Zustand / React Query (Gestion d'état)              │
+                  │   - Lucide Icons & Framer Motion (UI/UX)                │
+                  └──────────────┬───────────────────────────┬──────────────┘
+                                 │                           │
+                   Inbound Webhooks / Form           Serverless Routes / API
+                                 │                           │
+  ┌──────────────────────────────▼─────────────┐ ┌───────────▼───────────────────────────┐
+  │         SERVICES TIERS DE NOTIFICATION      │ │              BACKEND SERVICES         │
+  │  - Resend / SendGrid (Transactional Mail)  │ │  - Node.js (Hono/Express) ou Go       │
+  │  - Twilio / Meta Graph API (WhatsApp API)  │ │  - Prisma ORM / PostgreSQL (Supabase) │
+  └────────────────────────────────────────────┘ └───────────────────────────────────────┘
+1.1 Stack ChoisieFrontend Framework : Next.js 14+ (App Router) ou React + Vite (avec SSG/SSR via TanStack Router). Next.js est privilégié pour le rendu hybride (SEO ultra-rapide) et les API Routes serverless.UI & Stylos : Tailwind CSS + Shadcn UI / Radix Primitives (garantit accessibilité WCAG AA, responsive et légèreté).Validation des données : Zod + React Hook Form (sécurité et expérience de saisie zéro défaut).Backend / Database (V1 Light) : Node.js/TypeScript avec Prisma ORM + PostgreSQL (Hébergé sur Supabase ou NeonDB) pour historiser et sécuriser les leads commercialement stratégiques.Notifications / Mails : Resend API (Emails transactionnels HTML propres) + Meta WhatsApp Business API / Webhooks pour la redirection préremplie.2. MODÉLISATION DE LA BASE DE DONNÉES (V1 - Lead Capture)Afin d'éviter la perte de devis en cas d'erreur réseau/e-mail, toute demande est obligatoirement persistée en base SQL avant envoi des notifications.Schema relationnel conceptuel (Prisma / SQL)Extrait de codeenum ServiceType {
+  MARITIME
+  AERIEN
+  TERRESTRE
+  MULTIMODAL
+  DEDOUANEMENT
+}
+
+enum OperationType {
+  IMPORT
+  EXPORT
+  TRANSIT
+}
+
+enum QuoteStatus {
+  PENDING
+  UNDER_REVIEW
+  QUOTED
+  REJECTED
+  ARCHIVED
+}
+
+model QuoteRequest {
+  id              String        @id @default(uuid())
+  reference       String        @unique // Ex: BLT-2026-001042
+  
+  // Client Info
+  firstName       String
+  lastName        String
+  companyName     String?
+  email           String
+  phone           String
+  whatsapp        String?
+
+  // Logistics Specs
+  serviceType     ServiceType
+  operationType   OperationType
+  originCountry   String
+  originCity      String
+  destCountry     String
+  destCity        String
+  
+  // Cargo Details
+  cargoNature     String
+  cargoDescription String?      @db.Text
+  weightKg        Float?
+  volumeCbm       Float?
+  packageCount    Int?
+  containerNumber String?
+  
+  // Operational Metas
+  targetDate      DateTime?
+  isUrgent        Boolean       @default(false)
+  additionalNotes String?       @db.Text
+  
+  // Workflow Status
+  status          QuoteStatus   @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([reference])
+  @@index([status])
+  @@index([createdAt])
+}
+3. SPÉCIFICATIONS TECHNIQUES DÉTAILLÉES (DX, SEC, PERF)
+3.1 Pipeline de Traitement du Formulaire de Devis1.
+Saisie Client & Validation UX :Front-end (Zod + React Hook Form).
+Validation en temps réel des numéros de téléphone (Format E.164), des formats d'e-mail et affichage dynamique des champs selon le type de transport (ex: numéro de conteneur affiché uniquement si Maritime).
+2.Soumission Sécurisée :POST /api/v1/quotes.Protection contre le spam via Cloudflare Turnstile (alternative transparente et RGPD à reCAPTCHA) + Rate limiting (max 3 soumissions/heure par IP via Redis/Upstash).
+3.Persistance & Génération de Référence :Database Operation.Génération atomique de la référence unique au format BLT-YYYY-XXXXXX et enregistrement dans la base PostgreSQL.
+4.Dispatch des Notifications :Asynchronous Mail & Webhook.Envoi immédiat d'un e-mail de confirmation au prospect avec récapitulatif et numéro de référence (Resend).
+Notification instantanée à l'équipe commerciale BELTRANS avec bouton d'action direct vers l'adresse du client ou WhatsApp.
+5.Feedback Visuel Client :Front-end State.Affichage de la page de confirmation / modal de succès avec CTA d'urgence ("Contacter directement via WhatsApp avec la référence BLT-YYYY-XXXXXX").
+3.2 Matrix SEO & Performance TargetsMétrique / ÉlémentCible / StandardImplémentation TechniqueLighthouse Performance> 90/100 sur MobileServer-Side Rendering (SSR) / Static Site Generation (SSG), compression WebP/AVIF.Lighthouse SEO100/100Meta-tags dynamiques, balisage OpenGraph / Twitter Cards.Accessibility (a11y)WCAG 2.1 Level AARatios de contraste > 4.5:1, attributs ARIA sur modales et menus, focus navigation clavier.Core Web VitalsLCP < 2.5s | FID < 100ms | CLS < 0.1Optimization des Web Fonts (font-display: swap), preloading des assets Hero.Data StructuréeSchema.org (LogisticsService, LocalBusiness)Injection JSON-LD pour extraits enrichis dans Google Search (zones desservies, contact, horaires).4. PLAN D'EXÉCUTION & ROADMAP AGILE (6 SEMAINES)[Semaine 1] ───► Audit, Cadrage & Maquettes UI/UX (Figma)
+[Semaine 2] ───► Design System & Architecture Next.js / Setup Database
+[Semaine 3] ───► Développement Front-end (Core Pages & Components)
+[Semaine 4] ───► Formulaire Complexes, Intégration API & Notifications Mail/WhatsApp
+[Semaine 5] ───► Tests de Recette, Optimisations SEO & Mobile, QA Sécurité
+[Semaine 6] ───► Recette Client, Déploiement Vercel/Cloudflare & Handover
+Phase 1 — Cadrage, Data & UX DesignSemaine 1Validation des données légales/métier auprès de BELTRANS (RCCM, Agréments, Services réels).
+Design UI/UX complet sur Figma (Mobile First) : Wireframes & Prototype haute-fidélité.Validation de la charte graphique (palette bleu nuit/doré, typographies).
+Phase 2 — Core Engine & Architecture Front/BackSemaines 2-3Initialisation du repo Git, configuration du linter (ESLint, Prettier) et du CI/CD.Développement des composants UI atomiques (Shadcn UI + Tailwind).Intégration des pages statiques/instituionnelles (Accueil, À propos, Services, FAQ, Contact).
+Phase 3 — Moteur de Devis & API ServicesSemaine 4Construction du wizard multi-étapes pour la demande de devis.Setup du schéma de base de données PostgreSQL / Prisma.Implémentation des endpoints API /api/quotes avec validation Zod + Turnstile.Connexion avec Resend (Mails HTML transactionnels) et WhatsApp API.
+Phase 4 — Assurance Qualité & SEO HardeningSemaine 5Audit SEO technique (Sitemap XML, Robots.txt, JSON-LD Schema.org).Optimisation poussée des images (WebP/AVIF) et lazy-loading.Tests multi-navigateurs (Safari Mobile, Chrome, Edge, Firefox) et responsive.
+Phase 5 — Déploiement & Recette FinaleSemaine 
+6Déploiement Staging pour validation finale avec l'équipe BELTRANS.Bascule DNS vers le domaine principal avec SSL (HTTPS).Configuration de Google Search Console & Google Analytics 4 (GA4 Event Tracking).Remise de la documentation technique et du code source.
+5. LIVRABLES TECHNIQUES ATTENDUSRepository Source Git : Code propre, typé (TypeScript), modulaire, documenté, avec historique de commits clair (conventional commits).Design System & Asset Pack : Fichiers sources Figma, déclinaisons du logo vectoriel (SVG), favicons multi-formats.Documentation Technique (README.md) :Guide d'installation locale (npm run dev).Structure des variables d'environnement (.env.example).Guide de déploiement et de maintenance des clés API (Resend, Supabase, Cloudflare).Console Analytics & Webmaster Tools : Propriétés GA4 et Search Console configurées avec suivi des conversions de devis (quote_form_submitted).

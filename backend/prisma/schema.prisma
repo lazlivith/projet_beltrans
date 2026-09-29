@@ -1,0 +1,120 @@
+// BELTRANS — V1 Lead Capture (CDCFT §2)
+// Toute demande de devis est persistée AVANT l'envoi des notifications.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ServiceType {
+  MARITIME
+  AERIEN
+  TERRESTRE
+  MULTIMODAL
+  DEDOUANEMENT
+}
+
+enum OperationType {
+  IMPORT
+  EXPORT
+  TRANSIT
+}
+
+enum QuoteStatus {
+  PENDING
+  UNDER_REVIEW
+  QUOTED
+  REJECTED
+  ARCHIVED
+}
+
+model QuoteRequest {
+  id        String @id @default(uuid())
+  reference String @unique // Ex: BLT-2026-001042 (l'index unique couvre les recherches par référence)
+
+  // Client Info
+  firstName   String
+  lastName    String
+  companyName String?
+  email       String
+  phone       String // E.164
+  whatsapp    String? // E.164
+
+  // Logistics Specs
+  serviceType   ServiceType
+  operationType OperationType
+  originCountry String
+  originCity    String
+  destCountry   String
+  destCity      String
+
+  // Cargo Details
+  cargoNature      String
+  cargoDescription String? @db.Text
+  weightKg         Float?
+  volumeCbm        Float?
+  packageCount     Int?
+  containerNumber  String?
+
+  // Operational Metas
+  targetDate      DateTime?
+  isUrgent        Boolean   @default(false)
+  additionalNotes String?   @db.Text
+
+  // Conformité données personnelles : horodatage du consentement
+  consentAt DateTime
+
+  // Workflow Status
+  status    QuoteStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Espace admin : suivi commercial
+  internalNotes String?   @db.Text
+  /// Première prise en charge (sortie du statut PENDING) — délai de prise en charge
+  reviewedAt    DateTime?
+  /// Premier passage au statut QUOTED — délai d'envoi du devis
+  quotedAt      DateTime?
+  /// Données personnelles effacées (rétention 3 ans, cf. mentions légales)
+  anonymizedAt  DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([updatedAt])
+}
+
+/// Compte de l'espace admin (créé en ligne de commande : npm run admin:create -w backend).
+model AdminUser {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  /// Hachage scrypt (format : scrypt$N$r$p$sel$hash)
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  lastLoginAt  DateTime?
+  sessions     AdminSession[]
+}
+
+/// Session admin côté serveur (révocable). Seul le SHA-256 du jeton est stocké.
+model AdminSession {
+  id        String    @id
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([adminId])
+  @@index([expiresAt])
+}
+
+// Compteur annuel pour la génération atomique des références BLT-YYYY-XXXXXX.
+// L'upsert est exécuté en INSERT ... ON CONFLICT DO UPDATE (verrou de ligne) dans la même
+// transaction que la création du devis : pas de doublon, pas de trou en cas d'échec.
+model QuoteCounter {
+  year  Int @id
+  value Int @default(0)
+}

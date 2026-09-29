@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BELTRANS sarl — Actualités</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root { --ink:#04102b; --cream:#04102bf3;; --white:#ffffff; --blue:#0d3fa6; --gold:#d4a843; --glass:rgba(255,255,255,0.06); }
+    body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden}
+    .navbar{position:sticky;top:0;z-index:100;background:#04102bf3;;backdrop-filter:blur(20px) saturate(180%);padding:0 3rem;height:76px;display:flex;align-items:center;justify-content:space-between}
+    .nav-logo img{height:80px;width:auto}
+    .nav-center{display:flex;align-items:center;gap:.1rem}
+    .nav-center a{font-size:.78rem;font-weight:500;color:rgba(255,255,255,.55);text-decoration:none;padding:.55rem 1.1rem;border-radius:6px}
+    .nav-center a.active{color:var(--white)}
+    .container{max-width:1180px;margin:0 auto;padding:3rem}
+    .page-title{font-family:'DM Serif Display',serif;font-size:2.4rem;margin-bottom:1rem}
+    .lead{color:rgba(4,16,43,.6);line-height:1.7;margin-bottom:1.2rem}
+    .card{background:var(--white);padding:1.6rem;border-radius:12px;border:1px solid rgba(4,16,43,.06);box-shadow:0 8px 30px rgba(4,16,43,.04)}
+    .news-list{display:grid;gap:1rem}
+    .news-item{display:flex;gap:1rem;align-items:flex-start}
+    .news-thumb{width:140px;height:90px;background:linear-gradient(90deg,#0d3fa6,#56a0e0);border-radius:8px;flex-shrink:0}
+    .news-body h3{margin-bottom:.3rem;font-size:1.05rem}
+    .news-meta{font-size:.85rem;color:rgba(4,16,43,.5);margin-bottom:.6rem}
+    .page-image{width:100%;max-height:380px;object-fit:cover;border-radius:16px;margin-bottom:1.5rem;display:block}
+    footer{padding:2rem 3rem;margin-top:3rem;background:rgba(4,16,43,.04)}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-logo"><a href="index.html"><img src="images/logo final.png" alt="beltrans logo"></a></div>
+  <div class="nav-center">
+    <a href="index.html">Accueil</a>
+    <a href="services.html">Services</a>
+    <a href="a-propos.html">À propos</a>
+    <a href="actualites.html" class="active">Actualités</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <div class="nav-right"><a href="#devis" class="nav-btn">Obtenir un devis</a></div>
+</nav>
+
+<header style="background:linear-gradient(90deg, rgba(244, 246, 248, 0.068), rgba(255, 255, 255, 0.863)), url('images/large.png'); background-size:cover; background-position:center; background-repeat:no-repeat; padding: 2rem 0; color:var(--white)">
+ <div class="container">
+    <h1 class="page-title" style="color: white;">Actualités</h1>
+    
+    <p class="lead" style="color: white;">
+        Retrouvez les dernières informations, annonces et mises à jour de BELTRANS.
+    </p>
+</div>
+</header>
+
+<section class="container" style="padding-top:2rem;">
+  <div class="card">
+    <div class="news-list">
+      <article class="news-item">
+        <div class="news-thumb" aria-hidden></div>
+        <div class="news-body">
+          <div class="news-meta">24 mai 2026 · Communiqué</div>
+          <h3>Ouverture d'une nouvelle agence régionale</h3>
+          <p class="lead">BELTRANS ouvre une antenne régionale pour renforcer sa présence logistique en Afrique Centrale.</p>
+        </div>
+      </article>
+      <article class="news-item">
+        <div class="news-thumb" aria-hidden></div>
+        <div class="news-body">
+          <div class="news-meta">10 avril 2026 · Service</div>
+          <h3>Nouveau service de suivi 24h/24</h3>
+          <p class="lead">Mise en place d'un suivi en temps réel pour toutes les expéditions internationales.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container" style="display:flex;justify-content:space-between;align-items:center">
+    <div>© BELTRANS sarl</div>
+    <div><a href="mailto:contact@beltrans.com">contact@beltrans.com</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

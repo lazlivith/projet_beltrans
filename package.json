@@ -1,0 +1,34 @@
+{
+  "name": "beltrans",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plateforme web BELTRANS — monorepo frontend (Next.js) / backend (Node.js Express)",
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,yellow \"npm:dev -w backend\" \"npm:dev -w frontend\"",
+    "dev:backend": "npm run dev -w backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:deploy": "npm run db:deploy -w backend",
+    "db:studio": "npm run db:studio -w backend",
+    "preview": "npm run build -w backend && npm run build -w frontend && concurrently -k -n api,web -c blue,yellow \"npm:start -w backend\" \"npm:start -w frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "prettier": "^3.6.0",
+    "prettier-plugin-tailwindcss": "^0.6.0"
+  },
+  "engines": {
+    "node": ">=20.9"
+  }
+}
